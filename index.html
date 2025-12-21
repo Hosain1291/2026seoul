@@ -29,7 +29,7 @@
 
         /* 기본 폰트 설정 및 숫자 입력 화살표 제거 */
         body { 
-            font-family: 'Independent', sans-serif !important; /* 폰트 강제 적용 */
+            font-family: 'Independent', sans-serif !important;
             touch-action: manipulation; 
         }
         
@@ -93,7 +93,7 @@
             </svg>
         );
 
-        // --- 데이터 상수 ---
+        // --- 데이터 상수 (서울) ---
         const BASELINE_MINJU = 39.23;
         const BASELINE_GUKHIM = 59.05;
 
@@ -279,10 +279,12 @@
             };
 
             return (
-                // font-sans 제거하여 body의 Independent 폰트 상속
-                <div className="h-screen bg-slate-50 text-slate-800 flex flex-col md:flex-row overflow-hidden">
+                // 1. min-h-screen으로 변경하고 overflow-hidden 제거: 모바일에서 스크롤 허용
+                // 2. md:h-screen, md:overflow-hidden: 데스크탑에서는 스크롤 없이 한 화면에 표시 유지
+                <div className="min-h-screen md:h-screen bg-slate-50 text-slate-800 flex flex-col md:flex-row md:overflow-hidden">
                     {/* --- 사이드바 (컨트롤) --- */}
-                    <aside className="w-full md:w-96 bg-white shadow-lg z-20 flex flex-col h-[45vh] md:h-screen border-r border-slate-200 shrink-0">
+                    {/* 모바일: 높이 자동(h-auto)으로 내용만큼 늘어남 -> 스크롤 유발 */}
+                    <aside className="w-full md:w-96 bg-white shadow-lg z-20 flex flex-col h-auto md:h-screen border-r border-slate-200 shrink-0">
                         <div className="p-4 md:p-6 border-b border-slate-100 shrink-0">
                             <div className="flex items-center gap-2 mb-1">
                                 <MapIcon className="text-slate-600" size={20} />
@@ -293,7 +295,8 @@
                             </p>
                         </div>
 
-                        <div className="p-4 md:p-6 space-y-4 md:space-y-8 flex-1 overflow-y-auto">
+                        {/* 모바일에서는 패딩만 주고 스크롤은 전체 페이지 스크롤에 맡김 */}
+                        <div className="p-4 md:p-6 space-y-4 md:space-y-8 flex-1 md:overflow-y-auto">
                             <div className="grid grid-cols-2 gap-4 md:block md:space-y-8">
                                 {/* 민주당 컨트롤 */}
                                 <div className="space-y-2">
@@ -380,7 +383,8 @@
                     </aside>
 
                     {/* --- 지도 영역 --- */}
-                    <main className="flex-1 relative bg-slate-100 overflow-hidden flex items-center justify-center h-[55vh] md:h-screen" onClick={() => setHoveredDistrict(null)}>
+                    {/* 모바일: h-[60vh] 등으로 고정 높이를 주어 스크롤하며 볼 수 있게 함 */}
+                    <main className="flex-1 relative bg-slate-100 overflow-hidden flex items-center justify-center h-[60vh] md:h-screen" onClick={() => setHoveredDistrict(null)}>
                         {loading ? (
                             <div className="flex flex-col items-center text-slate-400">
                                 <RefreshCw className="animate-spin-slow mb-3 w-8 h-8" />
