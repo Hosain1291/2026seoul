@@ -98,32 +98,33 @@
         const BASELINE_GUKHIM = 59.05;
 
         // 한글 구 이름 <-> SVG ID 매핑
+        // 새로운 지도는 한글 ID를 사용하므로 매핑을 한글-한글로 단순화
         const ID_MAP = {
-            '종로구': 'Jongno-gu',
-            '중구': 'Jung-gu',
-            '용산구': 'Yongsan-gu',
-            '성동구': 'Seongdong-gu',
-            '광진구': 'Gwangjin-gu',
-            '동대문구': 'Dongdaemun-gu',
-            '중랑구': 'Jungnang-gu',
-            '성북구': 'Seongbuk-gu',
-            '강북구': 'Gangbuk-gu',
-            '도봉구': 'Dobong-gu',
-            '노원구': 'Nowon-gu',
-            '은평구': 'Eunpyeong-gu',
-            '서대문구': 'Seodaemun-gu',
-            '마포구': 'Mapo-gu',
-            '양천구': 'Yangcheon-gu',
-            '강서구': 'Gangseo-gu',
-            '구로구': 'Guro-gu',
-            '금천구': 'Geumcheon-gu',
-            '영등포구': 'Yeongdeungpo-gu_1_',
-            '동작구': 'Dongjak-gu',
-            '관악구': 'Gwanak-gu',
-            '서초구': 'Seocho-gu',
-            '강남구': 'Gangnam-gu',
-            '송파구': 'Songpa-gu',
-            '강동구': 'Gangdong-gu'
+            '종로구': '종로구',
+            '중구': '중구',
+            '용산구': '용산구',
+            '성동구': '성동구',
+            '광진구': '광진구',
+            '동대문구': '동대문구',
+            '중랑구': '중랑구',
+            '성북구': '성북구',
+            '강북구': '강북구',
+            '도봉구': '도봉구',
+            '노원구': '노원구',
+            '은평구': '은평구',
+            '서대문구': '서대문구',
+            '마포구': '마포구',
+            '양천구': '양천구',
+            '강서구': '강서구',
+            '구로구': '구로구',
+            '금천구': '금천구',
+            '영등포구': '영등포구',
+            '동작구': '동작구',
+            '관악구': '관악구',
+            '서초구': '서초구',
+            '강남구': '강남구',
+            '송파구': '송파구',
+            '강동구': '강동구'
         };
 
         const DISTRICT_DATA = [
@@ -176,7 +177,8 @@
 
             useEffect(() => {
                 setLoading(true);
-                fetch('https://upload.wikimedia.org/wikipedia/commons/a/ae/Seoul_districts.svg')
+                // 새로운 지도 URL로 변경
+                fetch('https://raw.githubusercontent.com/statgarten/maps/8247e23ded70eb908a61dbe2b3db07599b4a21cc/svg/simple/%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C_%EC%8B%9C%EA%B5%B0%EA%B5%AC_%EA%B2%BD%EA%B3%84.svg')
                     .then(res => {
                         if (!res.ok) throw new Error("지도 이미지를 불러올 수 없습니다.");
                         return res.text();
@@ -238,10 +240,14 @@
                 const container = mapContainerRef.current;
                 
                 predictionData.districts.forEach(data => {
-                    const svgId = ID_MAP[data.name];
-                    if (!svgId) return;
-
-                    const element = container.querySelector(`#${svgId}`);
+                    // 한글 ID를 우선 사용 (ID_MAP이 동일 매핑이므로 data.name 사용)
+                    const svgId = data.name; 
+                    
+                    // ID로 찾거나, data-name 속성 등으로 찾기 시도
+                    let element = container.querySelector(`#${svgId}`);
+                    
+                    // 만약 ID로 찾지 못하면 다른 방식(예: svgId가 '종로구'일때 id가 없는 경우 등)을 대비
+                    // 일반적으로 이 지도는 한글 ID를 사용합니다.
                     
                     if (element) {
                         const isMinjuWin = data.winner === 'minju';
@@ -279,11 +285,8 @@
             };
 
             return (
-                // 1. min-h-screen으로 변경하고 overflow-hidden 제거: 모바일에서 스크롤 허용
-                // 2. md:h-screen, md:overflow-hidden: 데스크탑에서는 스크롤 없이 한 화면에 표시 유지
                 <div className="min-h-screen md:h-screen bg-slate-50 text-slate-800 flex flex-col md:flex-row md:overflow-hidden">
                     {/* --- 사이드바 (컨트롤) --- */}
-                    {/* 모바일: 높이 자동(h-auto)으로 내용만큼 늘어남 -> 스크롤 유발 */}
                     <aside className="w-full md:w-96 bg-white shadow-lg z-20 flex flex-col h-auto md:h-screen border-r border-slate-200 shrink-0">
                         <div className="p-4 md:p-6 border-b border-slate-100 shrink-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -295,7 +298,6 @@
                             </p>
                         </div>
 
-                        {/* 모바일에서는 패딩만 주고 스크롤은 전체 페이지 스크롤에 맡김 */}
                         <div className="p-4 md:p-6 space-y-4 md:space-y-8 flex-1 md:overflow-y-auto">
                             <div className="grid grid-cols-2 gap-4 md:block md:space-y-8">
                                 {/* 민주당 컨트롤 */}
@@ -383,7 +385,6 @@
                     </aside>
 
                     {/* --- 지도 영역 --- */}
-                    {/* 모바일: h-[60vh] 등으로 고정 높이를 주어 스크롤하며 볼 수 있게 함 */}
                     <main className="flex-1 relative bg-slate-100 overflow-hidden flex items-center justify-center h-[60vh] md:h-screen" onClick={() => setHoveredDistrict(null)}>
                         {loading ? (
                             <div className="flex flex-col items-center text-slate-400">
@@ -395,7 +396,7 @@
                                 <AlertCircle className="mb-2 h-10 w-10" />
                                 <p className="font-bold">지도 로딩 실패</p>
                                 <p className="text-sm mt-1 text-slate-500">{error}</p>
-                                <p className="text-xs mt-4 text-slate-400">위키미디어 서버 연결 상태를 확인해주세요.</p>
+                                <p className="text-xs mt-4 text-slate-400">인터넷 연결을 확인하거나 나중에 다시 시도해주세요.</p>
                             </div>
                         ) : (
                             <div className="relative w-full h-full max-w-5xl p-2 md:p-6 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
