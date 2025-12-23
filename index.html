@@ -26,10 +26,10 @@
 
         body { 
             font-family: 'Independent', sans-serif !important;
-            touch-action: none;
+            touch-action: pan-y; /* 모바일 세로 스크롤 허용 */
             background-color: #f8fafc;
-            overflow: hidden;
             color: #334155;
+            -webkit-font-smoothing: antialiased;
         }
         
         /* 숫자 입력창 스타일 */
@@ -60,9 +60,10 @@
         .map-viewport {
             width: 100%;
             height: 100%;
-            overflow: hidden;
+            overflow: hidden; /* 지도 영역 내부는 오버플로우 숨김 */
             position: relative;
             cursor: grab;
+            background-color: #f1f5f9;
         }
         .map-viewport:active { cursor: grabbing; }
         .map-transform-layer {
@@ -79,7 +80,7 @@
             transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* 스크롤바 */
+        /* 스크롤바 커스텀 */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
@@ -127,13 +128,13 @@
             { name: '서초구', minju2022: 26.47, gukhim2022: 72.31 },
             { name: '강남구', minju2022: 24.45, gukhim2022: 74.38 },
             { name: '송파구', minju2022: 34.03, gukhim2022: 64.66 },
-            { name: '강동구', minju2022: 37.85, gukhim2022: 60.56 }
+            { name: '강동구', minju2022: 37.85, gukhim2022: 60.65 }
         ];
 
         const COLORS = { minju: '#004EA2', gukhim: '#E61E2B' };
 
         const App = () => {
-            // 초기값은 나우캐스트 파일의 여론조사 득표율 참고 (민주 47.2, 국힘 37.9)
+            // 초기값: 나우캐스트 여론조사 (민주 47.2, 국힘 37.9)
             const [polls, setPolls] = useState({ minju: "47.2", gukhim: "37.9" });
             const [svgContent, setSvgContent] = useState(null);
             const [loading, setLoading] = useState(true);
@@ -194,16 +195,21 @@
                 const container = mapContainerRef.current;
                 
                 prediction.districts.forEach(d => {
+                    // ID 매칭 (Statgarten 서울지도 ID = 한글이름)
                     const element = container.querySelector(`#${d.name}`);
                     if (element) {
                         const color = d.winner === 'minju' ? COLORS.minju : COLORS.gukhim;
-                        // 격차가 작을수록 연하게 (0.4 ~ 1.0)
                         const opacity = Math.min(0.4 + (d.margin / 20), 1);
                         element.style.fill = color;
                         element.style.fillOpacity = opacity;
                         element.classList.add('district-path');
 
-                        element.onclick = (e) => { e.stopPropagation(); setHovered(d); };
+                        // 모바일 터치 대응
+                        element.onclick = (e) => { 
+                            e.preventDefault();
+                            e.stopPropagation(); 
+                            setHovered(d); 
+                        };
                         element.onmouseenter = () => { if (window.matchMedia('(hover: hover)').matches) setHovered(d); };
                     }
                 });
@@ -226,10 +232,11 @@
             };
 
             return (
-                <div className="h-screen flex flex-col md:flex-row overflow-hidden bg-white text-slate-800">
+                // 모바일에서는 min-h-screen으로 스크롤 허용, 데스크톱에서는 h-screen으로 고정
+                <div className="flex flex-col md:flex-row min-h-screen md:h-screen md:overflow-hidden bg-white text-slate-800">
                     {/* --- 컨트롤 패널 --- */}
-                    <aside className="w-full md:w-96 bg-white shadow-xl z-20 flex flex-col h-auto md:h-screen border-r border-slate-200 shrink-0">
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white">
+                    <aside className="w-full md:w-96 bg-white shadow-xl z-20 flex flex-col h-auto md:h-full border-r border-slate-200 shrink-0">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-white sticky top-0 z-30 md:static">
                             <div>
                                 <h1 className="text-2xl font-bold tracking-tighter text-slate-900 leading-none">서울특별시장 예측 '26</h1>
                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Seoul Mayor Nowcast</p>
@@ -294,14 +301,15 @@
                             <div className="grid grid-cols-2 gap-2">
                                 <button onClick={() => setPolls({minju: "47.2", gukhim: "37.9"})} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">현재 여론조사</button>
                                 <button onClick={() => setPolls({minju: "39.23", gukhim: "59.05"})} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">2022 실제결과</button>
-                                <button onClick={() => setPolls({minju: "50.0", gukhim: "40.0"})} className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-100 transition-colors">민주 우세</button>
-                                <button onClick={() => setPolls({minju: "40.0", gukhim: "50.0"})} className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">국힘 우세</button>
+                                <button onClick={() => setPolls({minju: "50.0", gukhim: "40.0"})} className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs font-bold text-blue-600 hover:bg-blue-100 transition-colors">민주 우세 (10%p)</button>
+                                <button onClick={() => setPolls({minju: "40.0", gukhim: "50.0"})} className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">국힘 우세 (10%p)</button>
                             </div>
                         </div>
                     </aside>
 
                     {/* --- 지도 뷰포트 --- */}
-                    <main className="flex-1 relative overflow-hidden bg-slate-100" 
+                    {/* 모바일: h-[60vh]로 고정하여 스크롤 시 지도 확보, 데스크톱: h-full */}
+                    <main className="flex-1 relative overflow-hidden bg-slate-100 h-[60vh] md:h-full" 
                           onWheel={onWheel}
                           onMouseDown={handleDragStart} onMouseMove={handleDragMove} onMouseUp={() => setIsDrag(false)}
                           onTouchStart={handleDragStart} onTouchMove={handleDragMove} onTouchEnd={() => setIsDrag(false)}
